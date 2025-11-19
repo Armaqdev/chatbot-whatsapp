@@ -207,3 +207,25 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`WhatsApp Gemini bot listening on port ${PORT}`);
 });
+// ✅ CÓDIGO PARA VERIFICAR EL WEBHOOK EN META
+app.get("/webhook", (req, res) => {
+    const mode = req.query["hub.mode"];
+    const token = req.query["hub.verify_token"];
+    const challenge = req.query["hub.challenge"];
+
+    // Verifica si el token coincide con el que pusiste en Railway
+    // Asegúrate de que la variable de entorno se llame igual
+    const myToken = process.env.WEBHOOK_VERIFY_TOKEN || "chatbotarmaq";
+
+    if (mode && token) {
+        if (mode === "subscribe" && token === myToken) {
+            console.log("WEBHOOK_VERIFIED");
+            res.status(200).send(challenge);
+        } else {
+            console.log("Token incorrecto");
+            res.sendStatus(403);
+        }
+    } else {
+        res.sendStatus(400); // Si no envían token, error.
+    }
+});
