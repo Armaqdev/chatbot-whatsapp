@@ -27,7 +27,7 @@ export const promptSections = {
     serviceArea: "Playa del Carmen, Cancún, Tulum y toda la Riviera Maya, Quintana Roo",
     
     // Horarios de atención
-    businessHours: "Lunes a viernes de 8:00 a 18:00. Sábados de 8:00 a 14:00. Domingos cerrado.",
+    businessHours: "Lunes a viernes de 8:00 a 18:00. Sábados y Domingos cerrado.",
     
     // Canales por los que los clientes pueden contactarte
     contactChannels: [
@@ -466,4 +466,5 @@ export const promptSections = {
     escalationMessage:
       "Te conecto con nuestro asesor Leonar Meneses:\n\n• WhatsApp: 984 801 8317\n• Email: ventas3.kingmaq@gmail.com\n\nHorario: Lunes a viernes 8:00-18:00, Sábados 8:00-14:00.",
   },
+
 };
