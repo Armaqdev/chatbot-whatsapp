@@ -203,13 +203,7 @@ app.post("/webhook", async (req, res) => {
 // INICIO DEL SERVIDOR
 // ========================================
 // Inicia el servidor en el puerto especificado
-app.listen(port, () => {
-  console.log(`WhatsApp Gemini bot listening on port ${port}`);
-});
-
-// Railway asigna un puerto automáticamente en la variable process.env.PORT
 const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => {
-    console.log(`Servidor corriendo en el puerto ${PORT}`);
+    console.log(`WhatsApp Gemini bot listening on port ${PORT}`);
 });
