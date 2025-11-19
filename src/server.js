@@ -1,231 +1,129 @@
 // ========================================
 // SERVIDOR PRINCIPAL DEL CHATBOT WHATSAPP
 // ========================================
-// Este archivo configura el servidor Express que maneja:
-// 1. Webhooks de WhatsApp para recibir mensajes
-// 2. Verificación del token de webhook
-// 3. Procesamiento de mensajes con IA Gemini
-// 4. Notificaciones a asesores
-// 5. Sistema rotativo de asignación de asesores
 
-import "dotenv/config"; // Carga las variables de entorno desde el archivo .env
+import "dotenv/config"; 
 import express from "express";
-import { generateBotReply } from "./services/gemini.js"; // Servicio para generar respuestas con IA
-import { sendWhatsAppText } from "./services/whatsapp.js"; // Servicio para enviar mensajes por WhatsApp
+import { generateBotReply } from "./services/gemini.js"; 
+import { sendWhatsAppText } from "./services/whatsapp.js"; 
 
 // ========================================
-// CONFIGURACIÓN DE ASESORES Y NOTIFICACIONES
+// CONFIGURACIÓN DE VARIABLES
 // ========================================
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-// Número donde llegan notificaciones generales (definido en .env)
+// IMPORTANTE: Unificamos el nombre del token para que coincida con Railway
+const VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN || "chatbotarmaq";
+
+// Configuración de asesores
 const notifyNumber = process.env.WHATSAPP_NOTIFY_NUMBER?.trim();
-
-// Lista de números de asesores para asignación rotativa (definidos en .env)
 const advisorNumbers = (process.env.WHATSAPP_ADVISOR_QUEUE ?? "")
-  .split(",") // Separa por comas
-  .map((value) => value.trim()) // Quita espacios extras
-  .filter(Boolean); // Filtra valores vacíos
+  .split(",")
+  .map((value) => value.trim())
+  .filter(Boolean);
 
-// Índice para rotación de asesores (empieza en 0)
 let advisorCursor = 0;
 
 // ========================================
-// FUNCIÓN PARA ASIGNACIÓN ROTATIVA DE ASESORES
+// FUNCIÓN PARA ROTACIÓN DE ASESORES
 // ========================================
-// Selecciona el siguiente asesor en la lista de manera circular
 const nextAdvisorNumber = () => {
-  if (advisorNumbers.length === 0) {
-    return null; // No hay asesores configurados
-  }
-
-  const advisor = advisorNumbers[advisorCursor]; // Obtiene el asesor actual
-  advisorCursor = (advisorCursor + 1) % advisorNumbers.length; // Avanza al siguiente (circular)
+  if (advisorNumbers.length === 0) return null;
+  const advisor = advisorNumbers[advisorCursor];
+  advisorCursor = (advisorCursor + 1) % advisorNumbers.length;
   return advisor;
 };
 
-// ========================================
-// CONFIGURACIÓN DEL SERVIDOR EXPRESS
-// ========================================
-
-const app = express();
-const port = Number(process.env.PORT ?? 3000); // Puerto del servidor (por defecto 3000)
-const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN; // Token para verificar webhook
-
-// Middleware para procesar JSON en las peticiones
+// Middleware
 app.use(express.json());
 
 // ========================================
-// ENDPOINT DE SALUD DEL SERVIDOR
+// RUTAS DEL SERVIDOR (ENDPOINTS)
 // ========================================
-// GET /health - Verifica que el servidor esté funcionando
+
+// 1. Salud del servidor
 app.get("/health", (_req, res) => {
   res.json({ ok: true, uptime: process.uptime() });
 });
 
-// ========================================
-// VERIFICACIÓN DEL WEBHOOK DE WHATSAPP
-// ========================================
-// GET /webhook - WhatsApp llama a este endpoint para verificar el webhook
-// Debe devolver el challenge si el token es correcto
+// 2. VERIFICACIÓN DEL WEBHOOK (GET)
+// Esta es la puerta que Meta toca para verificar que existes
 app.get("/webhook", (req, res) => {
-  const mode = req.query["hub.mode"]; // Modo de verificación
-  const token = req.query["hub.verify_token"]; // Token enviado por WhatsApp
-  const challenge = req.query["hub.challenge"]; // Challenge que debemos devolver
+  const mode = req.query["hub.mode"];
+  const token = req.query["hub.verify_token"];
+  const challenge = req.query["hub.challenge"];
 
-  // Verifica que el modo sea 'subscribe' y el token coincida
-  if (mode === "subscribe" && token === verifyToken) {
-    return res.status(200).send(challenge); // Webhook verificado exitosamente
+  // Log para depurar en Railway si algo falla
+  console.log(`Intento de verificación: Mode=${mode}, Token=${token}, MiToken=${VERIFY_TOKEN}`);
+
+  if (mode === "subscribe" && token === VERIFY_TOKEN) {
+    console.log("✅ WEBHOOK VERIFICADO");
+    res.status(200).send(challenge);
+  } else {
+    console.log("❌ FALLO DE VERIFICACIÓN: El token no coincide.");
+    res.sendStatus(403);
   }
-
-  return res.sendStatus(403); // Token incorrecto o modo inválido
 });
 
-// ========================================
-// PROCESAMIENTO DE MENSAJES DE WHATSAPP
-// ========================================
-// POST /webhook - WhatsApp envía aquí los mensajes recibidos
+// 3. RECEPCIÓN DE MENSAJES (POST)
 app.post("/webhook", async (req, res) => {
-  const entries = req.body.entry ?? []; // Entradas del webhook
+  const entries = req.body.entry ?? [];
   
-  // Procesa cada entrada del webhook
   for (const entry of entries) {
-    const changes = entry.changes ?? []; // Cambios en la entrada
-    
-    // Procesa cada cambio
+    const changes = entry.changes ?? [];
     for (const change of changes) {
       const value = change.value ?? {};
-      const messages = value.messages ?? []; // Mensajes recibidos
-      const contacts = value.contacts ?? []; // Información de contactos
+      const messages = value.messages ?? [];
+      const contacts = value.contacts ?? [];
 
-      // Procesa cada mensaje
       for (const message of messages) {
-        // Solo procesa mensajes de texto (ignora imágenes, audio, etc.)
-        if (message.type !== "text") {
-          continue;
-        }
+        if (message.type !== "text") continue;
 
-        // ========================================
-        // EXTRACCIÓN DE DATOS DEL MENSAJE
-        // ========================================
         const contact = contacts[0] ?? {};
-        const contactName = contact.profile?.name ?? ""; // Nombre del contacto
-        const waId = contact.wa_id ?? message.from; // Número de WhatsApp
-        const text = message.text?.body ?? ""; // Contenido del mensaje
-        const phoneNumberId = value.metadata?.phone_number_id; // ID del número de WhatsApp Business
+        const contactName = contact.profile?.name ?? ""; 
+        const waId = contact.wa_id ?? message.from; 
+        const text = message.text?.body ?? ""; 
+        const phoneNumberId = value.metadata?.phone_number_id; 
 
-        // ========================================
-        // GENERACIÓN DE RESPUESTA CON IA
-        // ========================================
+        // --- LOGICA DEL BOT ---
         try {
-          // Genera respuesta usando Gemini AI
           const reply = await generateBotReply(text);
-          // Envía la respuesta al cliente
           await sendWhatsAppText({ to: waId, message: reply, phoneNumberId });
         } catch (error) {
-          console.error("Failed to process message", error);
-          
-          // Mensaje de respaldo en caso de error
-          const fallback =
-            "En este momento no puedo responder. Un asesor humano dará seguimiento en breve.";
-          
+          console.error("Error procesando mensaje:", error);
+          const fallback = "En este momento no puedo responder. Un asesor humano dará seguimiento en breve.";
           try {
-            await sendWhatsAppText({
-              to: waId,
-              message: fallback,
-              phoneNumberId,
-            });
-          } catch (sendError) {
-            console.error("Failed to send fallback response", sendError);
-          }
+            await sendWhatsAppText({ to: waId, message: fallback, phoneNumberId });
+          } catch (e) {}
         }
 
-        // ========================================
-        // NOTIFICACIÓN GENERAL (si está configurada)
-        // ========================================
+        // --- NOTIFICACIONES ---
         if (notifyNumber) {
-          // Crea mensaje de notificación con información del cliente
-          const notification = [
-            "Título: mensaje del chatbot",
-            `Nombre del cliente: ${contactName}`,
-            `Número de WhatsApp: ${waId}`,
-            "Resumen de mensajes:",
-            text || "(sin contenido)",
-          ]
-            .filter(Boolean)
-            .join("\n");
-
+          const notification = `Chatbot Msg:\nCliente: ${contactName}\nTel: ${waId}\nMsg: ${text}`;
           try {
-            await sendWhatsAppText({
-              to: notifyNumber,
-              message: notification,
-              phoneNumberId,
-            });
-          } catch (notifyError) {
-            console.error("Failed to notify advisor pipeline", notifyError);
-          }
+            await sendWhatsAppText({ to: notifyNumber, message: notification, phoneNumberId });
+          } catch (e) { console.error("Error notificando pipeline", e); }
         }
 
-        // ========================================
-        // ASIGNACIÓN ROTATIVA DE ASESORES
-        // ========================================
-        const assignedAdvisor = nextAdvisorNumber(); // Obtiene el siguiente asesor
+        // --- ASESOR ROTATIVO ---
+        const assignedAdvisor = nextAdvisorNumber();
         if (assignedAdvisor) {
-          // Crea mensaje de asignación para el asesor
-          const assignmentMessage = [
-            "Título: asignación chatbot",
-            `Asesor asignado: ${assignedAdvisor}`,
-            `Nombre del cliente: ${contactName}`,
-            `Número de WhatsApp: ${waId}`,
-            "Resumen de mensajes:",
-            text || "(sin contenido)",
-          ].join("\n");
-
+          const assignMsg = `Asignación Chatbot:\nCliente: ${contactName}\nTel: ${waId}\nMsg: ${text}`;
           try {
-            // Envía notificación al asesor asignado
-            await sendWhatsAppText({
-              to: assignedAdvisor,
-              message: assignmentMessage,
-              phoneNumberId,
-            });
-          } catch (assignmentError) {
-            console.error("Failed to notify rotating advisor", assignmentError);
-          }
+            await sendWhatsAppText({ to: assignedAdvisor, message: assignMsg, phoneNumberId });
+          } catch (e) { console.error("Error notificando asesor", e); }
         }
       }
     }
   }
-
-  // Responde con código 200 para confirmar recepción del webhook
   return res.sendStatus(200);
 });
 
 // ========================================
-// INICIO DEL SERVIDOR
+// INICIAR SERVIDOR
 // ========================================
-// Inicia el servidor en el puerto especificado
-const PORT = process.env.PORT || 3000;
+// Esto SIEMPRE debe ir al final del archivo
 app.listen(PORT, () => {
     console.log(`WhatsApp Gemini bot listening on port ${PORT}`);
-});
-// ✅ CÓDIGO PARA VERIFICAR EL WEBHOOK EN META
-app.get("/webhook", (req, res) => {
-    const mode = req.query["hub.mode"];
-    const token = req.query["hub.verify_token"];
-    const challenge = req.query["hub.challenge"];
-
-    // Verifica si el token coincide con el que pusiste en Railway
-    // Asegúrate de que la variable de entorno se llame igual
-    const myToken = process.env.WEBHOOK_VERIFY_TOKEN || "chatbotarmaq";
-
-    if (mode && token) {
-        if (mode === "subscribe" && token === myToken) {
-            console.log("WEBHOOK_VERIFIED");
-            res.status(200).send(challenge);
-        } else {
-            console.log("Token incorrecto");
-            res.sendStatus(403);
-        }
-    } else {
-        res.sendStatus(400); // Si no envían token, error.
-    }
 });
