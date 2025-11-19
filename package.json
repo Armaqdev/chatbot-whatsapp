@@ -1,0 +1,46 @@
+{
+  "_comment_1": "========================================",
+  "_comment_2": "CONFIGURACIÓN DEL PROYECTO CHATBOT",
+  "_comment_3": "========================================",
+  "_comment_4": "Este archivo define las dependencias y scripts del proyecto",
+  "_comment_5": "Incluye dependencias para WhatsApp API, Gemini AI y servidor Express",
+  
+  "name": "whatsapp-gemini-chatbot",
+  "version": "1.0.0",
+  "description": "WhatsApp Business chatbot powered by Google Gemini",
+  "type": "module",
+  
+  "_comment_scripts": "SCRIPTS DISPONIBLES:",
+  "_comment_dev": "npm run dev - Inicia el servidor en modo desarrollo con recarga automática",
+  "_comment_start": "npm start - Inicia el servidor en modo producción",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js"
+  },
+  
+  "_comment_deps": "DEPENDENCIAS PRINCIPALES:",
+  "_comment_genai": "@google/genai - Cliente oficial de Google Gemini AI",
+  "_comment_dotenv": "dotenv - Carga variables de entorno desde archivo .env",
+  "_comment_express": "express - Framework web para crear el servidor HTTP",
+  "_comment_mime": "mime - Utilidades para tipos MIME",
+  "_comment_fetch": "node-fetch - Cliente HTTP para realizar peticiones",
+  "dependencies": {
+    "@google/genai": "^0.6.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mime": "^4.0.4",
+    "node-fetch": "^3.3.2"
+  },
+  
+  "_comment_devdeps": "DEPENDENCIAS DE DESARROLLO:",
+  "_comment_types": "@types/node - Tipos de TypeScript para Node.js",
+  "_comment_nodemon": "nodemon - Recarga automática del servidor durante desarrollo",
+  "devDependencies": {
+    "@types/node": "^22.8.5",
+    "nodemon": "^3.1.7"
+  }
+  "scripts": {
+  "start": "node src/server.js",
+  "test": "echo \"Error: no test specified\" && exit 1"
+},
+}
