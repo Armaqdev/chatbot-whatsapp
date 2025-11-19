@@ -1,302 +1,102 @@
-# 🤖 WhatsApp Business Chatbot con Google Gemini
-
-## 📋 **Descripción del Proyecto**
-
-Este proyecto implementa un chatbot inteligente para WhatsApp Business que utiliza **Google Gemini AI** para generar respuestas automáticas personalizadas. El bot puede:
-
-- ✅ Responder preguntas sobre productos y servicios
-- ✅ Proporcionar cotizaciones automáticas  
-- ✅ Manejar consultas de clientes 24/7
-- ✅ Notificar a asesores humanos cuando sea necesario
-- ✅ Sistema de asignación rotativa de asesores
-- ✅ Configuración completamente personalizable
-
----
-
-## 🔧 **Requisitos Previos**
-
-Antes de instalar, asegúrate de tener:
-
-### **Software necesario:**
-- **Node.js 18+** - [Descargar aquí](https://nodejs.org/)
-- **npm** (viene incluido con Node.js)
-
-### **Cuentas y servicios necesarios:**
-1. **WhatsApp Business API** - [Meta for Developers](https://developers.facebook.com/docs/whatsapp/cloud-api)
-   - Número de WhatsApp Business verificado
-   - Token de acceso permanente
-   - ID del número de teléfono
-
-2. **Google Gemini AI** - [AI Studio](https://ai.google.dev)
-   - Cuenta de Google
-   - Clave API gratuita de Gemini
-
-3. **Webhook público** (para desarrollo)
-   - [ngrok](https://ngrok.com) (recomendado para pruebas)
-   - O servidor con SSL/HTTPS
-
----
-
-## 🚀 **Instalación Paso a Paso**
-
-### **1. Descargar el proyecto**
-```bash
-# Clona o descarga el repositorio
-git clone [URL_DEL_REPOSITORIO]
-cd whatsapp-gemini-chatbot
-```
-
-### **2. Instalar dependencias**
-```bash
+🤖 WhatsApp Business Chatbot con Google Gemini (Node.js)
+Este proyecto implementa un chatbot inteligente para WhatsApp Business utilizando Google Gemini AI. Está diseñado para ser desplegado fácilmente en la nube (Railway, Render, etc.) y cuenta con un sistema de atención al cliente híbrido (IA + Asesores Humanos).
+✨ Características Principales
+🧠 IA Avanzada: Respuestas naturales generadas por Google Gemini.
+☁️ Cloud Ready: Configurado para despliegue en producción (Railway/Render).
+🔄 Asignación Rotativa: Distribuye leads entre una lista de asesores humanos.
+🔔 Notificaciones: Alerta a un supervisor y al asesor asignado.
+🛡️ Seguro: Verificación de Webhook y manejo de variables de entorno.
+📝 Personalizable: Catálogo y reglas de negocio editables en un solo archivo.
+🔧 Requisitos Previos
+Node.js 18+ (para desarrollo local).
+Cuenta en Meta Developers con un número de WhatsApp Business configurado.
+Clave API de Google AI Studio (Gemini).
+Cuenta en GitHub (para subir el código).
+Cuenta en Railway (u otro proveedor de hosting Node.js).
+🚀 Despliegue en Railway (Producción)
+Esta es la forma recomendada de usar el bot 24/7 sin mantener tu computadora encendida.
+1. Preparar Repositorio
+Sube este código a tu cuenta de GitHub (asegúrate de no subir el archivo .env ni la carpeta node_modules).
+2. Crear Proyecto en Railway
+Entra a railway.app y selecciona "Deploy from GitHub repo".
+Selecciona tu repositorio.
+Railway detectará automáticamente que es una app Node.js.
+3. Configurar Variables de Entorno
+En el panel de Railway, ve a la pestaña Variables y agrega las siguientes (usa los valores reales):
+Variable	Descripción	Ejemplo
+GEMINI_API_KEY	Tu clave de Google AI Studio	AIzaSyD...
+WEBHOOK_VERIFY_TOKEN	Contraseña que tú inventas para verificar con Meta	mi_token_secreto
+WHATSAPP_TOKEN	Token permanente (System User) de Meta	EAA...
+WHATSAPP_PHONE_NUMBER_ID	ID del número de teléfono en Meta	100200300...
+WHATSAPP_NOTIFY_NUMBER	Número del supervisor (con código de país)	529991234567
+WHATSAPP_ADVISOR_QUEUE	Lista de asesores separados por coma	529991112222,529993334444
+GEMINI_MODEL	(Opcional) Modelo a usar	gemini-2.5-flash
+⚠️ IMPORTANTE: No agregues la variable PORT manualmente en Railway. Deja que la plataforma asigne su propio puerto automáticamente.
+4. Generar Dominio Público
+En Railway, ve a Settings > Networking.
+Haz clic en Generate Domain.
+Copia tu URL (ej: https://chatbot-production.up.railway.app).
+5. Conectar con Meta (WhatsApp)
+Ve a Meta Developers > WhatsApp > Configuración.
+En Webhook, dale a Editar.
+URL de devolución: Pega tu dominio de Railway agregando /webhook al final.
+Ejemplo: https://chatbot-production.up.railway.app/webhook
+Token de verificación: Escribe el mismo que pusiste en las variables (WEBHOOK_VERIFY_TOKEN).
+Guarda y verifica.
+IMPORTANTE: En "Campos de webhook", dale a Administrar y suscríbete a messages.
+💻 Desarrollo Local
+Si quieres probar cambios en tu computadora antes de subir a la nube:
+Instalar dependencias:
+code
+Bash
 npm install
-```
-
-### **3. Configurar variables de entorno**
-Copia el archivo `.env` y completa todas las variables:
-
-**Archivo `.env` - Instrucciones detalladas:**
-
-```env
-# ========================================
-# CLAVE API DE GOOGLE GEMINI (REQUERIDA)
-# ========================================
-# Obtén tu clave GRATIS en: https://aistudio.google.com/apikey
-# 1. Ve al enlace anterior
-# 2. Inicia sesión con tu cuenta Google  
-# 3. Crea una nueva clave API
-# 4. Copia y pega aquí (mantén el secreto)
-GEMINI_API_KEY=
-
-# Modelo de IA (deja este valor por defecto)
-GEMINI_MODEL=gemini-2.5-flash
-
-# ========================================
-# CONFIGURACIÓN DE WHATSAPP BUSINESS
-# ========================================
-# Configura tu webhook en Meta for Developers:
-
-# Token de verificación (TÚ LO INVENTAS - puede ser cualquier texto)
-# Ejemplo: mi_token_secreto_123
-# Este mismo token debes ponerlo en Meta for Developers
-WHATSAPP_VERIFY_TOKEN=
-
-# Token de acceso de WhatsApp Business API (desde Meta for Developers)
-# 1. Ve a https://developers.facebook.com/apps/
-# 2. Crea una app de "Business" 
-# 3. Agrega el producto "WhatsApp"
-# 4. Copia el token de acceso temporal o genera uno permanente
-WHATSAPP_TOKEN=
-
-# ID del número de teléfono de WhatsApp Business
-# 1. En la consola de WhatsApp Business API
-# 2. Ve a la sección de números de teléfono
-# 3. Copia el "Phone number ID" (NOT el número de teléfono)
-WHATSAPP_PHONE_NUMBER_ID=
-
-# ========================================
-# SISTEMA DE NOTIFICACIONES
-# ========================================
-# Número donde quieres recibir notificaciones cuando alguien escriba
-# Formato: código país + número (ej: 521234567890 para México)
-# Opcional: déjalo vacío si no quieres notificaciones
-WHATSAPP_NOTIFY_NUMBER=
-
-# Lista de números de asesores para asignación rotativa
-# Formato: número1,número2,número3 (separados por comas, sin espacios)
-# Ejemplo: 521234567890,521234567891,521234567892
-WHATSAPP_ADVISOR_QUEUE=NUMERO_ASESOR_1,NUMERO_ASESOR_2,NUMERO_ASESOR_3
-
-# ========================================
-# CONFIGURACIÓN DEL SERVIDOR
-# ========================================
-# Puerto donde correrá tu servidor (3000 es el estándar)
-PORT=3000
-```
-
-### **4. Personalizar información del negocio**
-Edita el archivo `src/config/promptSections.js` con:
-- ✏️ Información de tu empresa
-- 🛍️ Catálogo de productos/servicios
-- 💰 Precios y políticas
-- 👥 Datos de contacto de asesores
-
----
-
-## ⚙️ **Configuración de WhatsApp Business**
-
-### **Paso 1: Configurar Webhook**
-1. Ve a [Meta for Developers](https://developers.facebook.com/apps/)
-2. Selecciona tu app de WhatsApp Business
-3. Ve a **WhatsApp > Configuration**
-4. En "Webhook":
-   - **Webhook URL**: `https://tu-dominio.com/webhook`
-   - **Verify Token**: El mismo que pusiste en `WHATSAPP_VERIFY_TOKEN`
-5. Suscríbete a estos eventos: `messages`
-
-### **Paso 2: Configurar ngrok (para desarrollo)**
-```bash
-# Instalar ngrok
-npm install -g ngrok
-
-# En una terminal separada
-ngrok http 3000
-
-# Copia la URL HTTPS que aparece (ej: https://abcd1234.ngrok.io)
-# Úsala como Webhook URL en Meta for Developers
-```
-
----
-
-## 🏃‍♂️ **Ejecución**
-
-### **Modo Desarrollo** (con recarga automática)
-```bash
+Configurar .env:
+Crea un archivo .env en la raíz basado en las variables de arriba.
+Iniciar servidor:
+code
+Bash
 npm run dev
-```
-
-### **Modo Producción**
-```bash
-npm start
-```
-
-El servidor iniciará en: `http://localhost:3000`
-
-### **Verificar que funciona:**
-1. Ve a: `http://localhost:3000/health`
-2. Deberías ver: `{"ok": true, "uptime": X}`
-
----
-
-## 📱 **Cómo Probar**
-
-1. **Envía un mensaje** al número de WhatsApp Business configurado
-2. **El chatbot responderá** automáticamente usando la información que configuraste
-3. **Recibirás notificaciones** en los números configurados
-4. **Revisa los logs** en la consola para debugging
-
-### **Mensajes de prueba sugeridos:**
-- "Hola, ¿qué productos tienen?"
-- "¿Cuánto cuesta [nombre de producto]?"
-- "¿Cuáles son sus horarios?"
-- "Necesito hablar con un asesor"
-
----
-
-## 📁 **Estructura del Proyecto**
-
-```
-├── 📄 .env                     # Variables de entorno (TUS CLAVES SECRETAS)
-├── 📄 package.json             # Dependencias y scripts
-├── 📄 README.md               # Esta documentación
-└── 📁 src/
-    ├── 📄 server.js           # Servidor principal Express
-    ├── 📁 config/
-    │   └── 📄 promptSections.js # Configuración del negocio
-    └── 📁 services/
-        ├── 📄 gemini.js       # Integración con Gemini AI
-        ├── 📄 promptBuilder.js # Constructor de prompts
-        └── 📄 whatsapp.js     # Integración con WhatsApp API
-```
-
----
-
-## 🛠️ **Personalización**
-
-### **Cambiar la información del negocio:**
-Edita `src/config/promptSections.js`:
-
-- **businessProfile**: Nombre, horarios, ubicación
-- **catalog**: Productos y precios  
-- **pricingRules**: Políticas de precios
-- **operationalPolicies**: Contactos de asesores
-- **responseStyle**: Cómo responde el bot
-
-### **Ajustar el comportamiento de la IA:**
-Edita `src/services/gemini.js`:
-- **temperature**: Creatividad (0.0-1.0)
-- **maxOutputTokens**: Longitud de respuestas
-- **topP**: Diversidad de respuestas
-
----
-
-## 🐛 **Resolución de Problemas**
-
-### **Error: "Missing GEMINI_API_KEY"**
-- ✅ Verifica que configuraste `GEMINI_API_KEY` en `.env`
-- ✅ Asegúrate de que la clave API es válida
-
-### **Error: "Missing WHATSAPP_TOKEN"**  
-- ✅ Configura `WHATSAPP_TOKEN` en `.env`
-- ✅ Verifica que el token no ha expirado
-
-### **Webhook no funciona**
-- ✅ Asegúrate de que la URL del webhook es HTTPS
-- ✅ Verifica que `WHATSAPP_VERIFY_TOKEN` coincide en ambos lados
-- ✅ Revisa que el servidor esté corriendo y accesible
-
-### **No llegan mensajes**
-- ✅ Verifica la configuración del webhook en Meta for Developers
-- ✅ Revisa los logs del servidor
-- ✅ Asegúrate de que el número está verificado en WhatsApp Business
-
----
-
-## 📞 **Soporte**
-
-Si tienes problemas:
-
-1. **Revisa los logs** en la consola del servidor
-2. **Verifica todas las variables** del archivo `.env`  
-3. **Prueba el endpoint** `/health` para confirmar que el servidor funciona
-4. **Revisa la documentación** de WhatsApp Business API y Gemini AI
-
----
-
-## 🔒 **Seguridad**
-
-- ⚠️ **NUNCA** subas tu archivo `.env` a repositorios públicos
-- 🔐 Mantén tus tokens y claves API en secreto
-- 🔄 Rota tus tokens periódicamente
-- 🛡️ Usa HTTPS en producción
-
-El servidor expone:
-- `GET /health`: verificación sencilla de estado.
-- `GET /webhook`: verificación inicial de Meta (usa `hub.verify_token`).
-- `POST /webhook`: recepción de mensajes de WhatsApp.
-
-## Flujo de mensajes
-
-1. WhatsApp envía un webhook al recibir un mensaje.
-2. `src/server.js` procesa el payload y extrae el texto.
-3. `generateBotReply` (en `src/services/gemini.js`) construye el prompt dinámico con `buildPromptContents` y llama a Gemini.
-4. El bot envía la respuesta a WhatsApp usando `sendWhatsAppText`.
-
-### Ajustar prompts y reglas
-
-- Añade o modifica productos en el arreglo `catalog`.
-- Documenta políticas o FAQs en `pricingRules` y `operationalPolicies`.
-- Ajusta el tono, formato y fallback en `responseStyle`.
-- Usa `compliance` para bloquear promesas o definir cuándo escalar a un humano.
-
-Cada vez que cambies las reglas en `promptSections`, el bot aplicará automáticamente la nueva lógica sin alterar el código.
-
-## Exponer el webhook
-
-Mientras desarrollas, puedes usar `ngrok` para exponer tu servidor local:
-```bash
+Exponer a internet (Tunneling):
+Para que Meta vea tu localhost, usa ngrok:
+code
+Bash
 ngrok http 3000
-```
-
-Registra la URL pública generada dentro del panel de WhatsApp Cloud API como Webhook y selecciona los eventos de `messages` y `messages_status`.
-
-## Pruebas
-
-1. Envía un mensaje de WhatsApp al número configurado.
-2. Verifica que el bot responde acorde a las reglas definidas.
-3. Revisa la terminal para detectar errores de Gemini o de la API de WhatsApp.
-
-## Siguientes pasos sugeridos
-
-- Añadir almacenamiento de historial de conversaciones (por ejemplo, Redis o base de datos).
-- Persistir cotizaciones o pedidos para seguimiento.
-- Integrar autenticación de clientes recurrentes mediante identificador.
+Usa la URL que te da ngrok en el panel de Meta.
+📁 Estructura del Proyecto
+code
+Code
+├── 📄 .env                     # Variables (NO subir a GitHub)
+├── 📄 package.json             # Dependencias
+├── 📄 README.md                # Esta documentación
+└── 📁 src/
+    ├── 📄 server.js           # Servidor Express (Webhooks y Lógica)
+    ├── 📁 config/
+    │   └── 📄 promptSections.js # ⚙️ AQUÍ SE EDITA LA INFO DEL NEGOCIO
+    └── 📁 services/
+        ├── 📄 gemini.js       # Conexión con IA
+        ├── 📄 promptBuilder.js # Construcción del contexto
+        └── 📄 whatsapp.js     # Envío de mensajes API
+🛠️ Personalización del Bot
+Para cambiar precios, productos, horarios o el tono del bot, no necesitas tocar el código complicado.
+Solo edita el archivo:
+👉 src/config/promptSections.js
+Ahí encontrarás secciones claras para:
+businessProfile: Datos generales.
+catalog: Tus productos.
+pricingRules: Reglas de precios.
+operationalPolicies: Garantías y envíos.
+❓ Solución de Problemas Comunes
+1. "Application failed to respond" en Railway
+Asegúrate de que en server.js la línea de inicio sea: app.listen(PORT, '0.0.0.0', ...).
+Verifica que no hayas definido una variable PORT fija en Railway (borrala para que sea dinámica).
+2. Error (#131009) Parameter value is not valid (Número malformado)
+Revisa las variables WHATSAPP_NOTIFY_NUMBER o WHATSAPP_ADVISOR_QUEUE.
+Los números deben incluir el código de país sin símbolos + ni espacios.
+Correcto (México): 529991234567
+Incorrecto: 9991234567 o +52 999...
+3. El bot no contesta aunque el Webhook está verificado
+Ve a Meta Developers > WhatsApp > Configuración > Webhooks > Administrar.
+Asegúrate de haber marcado Suscribirse (Subscribe) en la fila de messages.
+📞 Soporte
+Desarrollado para automatización de ventas y atención al cliente.
+Si necesitas ayuda técnica, revisa los Logs en tu panel de Railway para ver el error exacto.
