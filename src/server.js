@@ -124,6 +124,9 @@ app.post("/webhook", async (req, res) => {
 // INICIAR SERVIDOR
 // ========================================
 // Esto SIEMPRE debe ir al final del archivo
-app.listen(PORT, () => {
+
+// ⚠️ CAMBIO IMPORTANTE AQUÍ: Agregamos '0.0.0.0'
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`WhatsApp Gemini bot listening on port ${PORT}`);
 });
+
