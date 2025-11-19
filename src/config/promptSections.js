@@ -24,7 +24,7 @@ export const promptSections = {
       "Con más de 15 años de experiencia en el sector, ARMAQ se ha consolidado como una empresa líder especializada en la venta y mantenimiento de maquinaria ligera para la construcción. Trabajamos con marcas líderes en la industria como CIPSA, HYPERMAQ, MPOWER, MAKITA, HONDA y KOHLER, garantizando productos de la más alta calidad. Ofrecemos soluciones completas en equipos para compactación, concreto, corte, demolición, generación de energía, andamiaje y accesorios para cimbra.",
     
     // Zona geográfica donde das servicio
-    serviceArea: "Playa del Carmen, Cancún, Tulum y toda la Riviera Maya, Quintana Roo",
+    serviceArea: "Playa del Carmen, Cancún, Tulum y toda la Riviera Maya, Quintana Roo, tambien contamos con envio a toda la republica",
     
     // Horarios de atención
     businessHours: "Lunes a viernes de 8:00 a 18:00. Sábados y Domingos cerrado.",
@@ -38,7 +38,7 @@ export const promptSections = {
     ],
     
     // Información sobre recogida en sucursal
-    pickupOptions: "Recogida disponible en nuestra sucursal de Playa del Carmen: 50 Avenida Norte, MZ 390 LT 8, Colonia Luis Donaldo Colosio, C.P. 77728, Playa del Carmen, Quintana Roo.",
+    pickupOptions: "Recogida disponible en nuestra sucursal de Playa del Carmen: 50 Avenida Norte, MZ 390 LT 8, Colonia Luis Donaldo Colosio, C.P. 77728, Playa del Carmen, Quintana Roo. https://maps.app.goo.gl/e3KMr56jzEyKCgfh7",
     
     // Política de entregas
     deliveryPolicy:
@@ -403,7 +403,7 @@ export const promptSections = {
     "Garantías de 6 meses a 2 años según el equipo y marca.",
     "Refacciones y servicio técnico disponibles para todos los equipos vendidos.",
     
-    "ENTREGA: Tiempos de entrega de 1 a 5 días hábiles según disponibilidad y ubicación.",
+    "ENTREGA: Tiempos de entrega inmediata o de 3 a 5 días hábiles según disponibilidad y ubicación.",
     "Entregas en toda la Riviera Maya con cargo según distancia.",
     "Recogida en sucursal sin costo adicional.",
     
@@ -433,7 +433,7 @@ export const promptSections = {
     ],
     
     fallback:
-      "Para más información, contacta a nuestro asesor Leonar Meneses al WhatsApp 984 801 8317 o email ventas3.kingmaq@gmail.com",
+      "Para más información, contacta a nuestro asesor Leonar Meneses al WhatsApp 984 801 8317 o email ventas3.kingmaq@gmail.com o visite nuestra sucursal https://maps.app.goo.gl/e3KMr56jzEyKCgfh7",
   },
 
   // ========================================
@@ -468,3 +468,4 @@ export const promptSections = {
   },
 
 };
+
