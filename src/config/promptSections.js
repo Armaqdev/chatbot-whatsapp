@@ -15,20 +15,20 @@ export const promptSections = {
   businessProfile: {
     // Nombre completo del negocio con ubicación
     displayName: "ARMAQ Maquinaria Ligera | Playa del Carmen, Q.R.",
-    
+
     // Descripción corta de lo que hace tu empresa
     tagline: "Venta de maquinaria ligera para construcción y obras en Playa del Carmen y toda la Riviera Maya",
-    
+
     // Descripción más detallada del negocio
     overview:
       "Con más de 15 años de experiencia en el sector, ARMAQ se ha consolidado como una empresa líder especializada en la venta y mantenimiento de maquinaria ligera para la construcción. Trabajamos con marcas líderes en la industria como CIPSA, HYPERMAQ, MPOWER, MAKITA, HONDA y KOHLER, garantizando productos de la más alta calidad. Ofrecemos soluciones completas en equipos para compactación, concreto, corte, demolición, generación de energía, andamiaje y accesorios para cimbra.",
-    
+
     // Zona geográfica donde das servicio
-    serviceArea: "Playa del Carmen, Cancún, Tulum y toda la Riviera Maya, Quintana Roo, tambien contamos con envio a toda la republica",
-    
+    serviceArea: "Playa del Carmen, Cancún, Tulum y toda la Riviera Maya, Quintana Roo, tambien contamos con envio a toda la republica. Ubicación: https://maps.app.goo.gl/dYZbukEnLx4KDK8r9",
+
     // Horarios de atención
     businessHours: "Lunes a viernes de 8:00 a 18:00. Sábados y Domingos cerrado.",
-    
+
     // Canales por los que los clientes pueden contactarte
     contactChannels: [
       "WhatsApp: 984 801 8317",
@@ -36,10 +36,10 @@ export const promptSections = {
       "Email: ventas3.kingmaq@gmail.com",
       "Visita en sucursal",
     ],
-    
+
     // Información sobre recogida en sucursal
-    pickupOptions: "Recogida disponible en nuestra sucursal de Playa del Carmen: 50 Avenida Norte, MZ 390 LT 8, Colonia Luis Donaldo Colosio, C.P. 77728, Playa del Carmen, Quintana Roo. https://maps.app.goo.gl/e3KMr56jzEyKCgfh7",
-    
+    pickupOptions: "Recogida disponible en nuestra sucursal de Playa del Carmen: 50 Avenida Norte, MZ 390 LT 8, Colonia Luis Donaldo Colosio, C.P. 77728, Playa del Carmen, Quintana Roo. https://maps.app.goo.gl/dYZbukEnLx4KDK8r9",
+
     // Política de entregas
     deliveryPolicy:
       "Realizamos entregas en toda la Riviera Maya. Envíos propios y por mensajería. Los tiempos de entrega varían según el producto y la ubicación. Consulta disponibilidad y costos de envío con nuestros asesores.",
@@ -402,15 +402,15 @@ export const promptSections = {
     "VENTA: Todos los equipos nuevos incluyen garantía del fabricante.",
     "Garantías de 6 meses a 2 años según el equipo y marca.",
     "Refacciones y servicio técnico disponibles para todos los equipos vendidos.",
-    
+
     "ENTREGA: Tiempos de entrega inmediata o de 3 a 5 días hábiles según disponibilidad y ubicación.",
     "Entregas en toda la Riviera Maya con cargo según distancia.",
     "Recogida en sucursal sin costo adicional.",
-    
+
     "MANTENIMIENTO: Servicio de mantenimiento preventivo y correctivo disponible.",
     "Técnicos especializados en todas las marcas que manejamos.",
     "Refacciones originales en stock.",
-    
+
     "CONTACTO DE ASESOR:",
     "• Leonar Meneses",
     "• WhatsApp/Teléfono: 984 801 8317",
@@ -422,7 +422,7 @@ export const promptSections = {
   // ========================================
   responseStyle: {
     tone: "Amable, directo y profesional. Respuestas cortas y concisas. Usar español de México.",
-    
+
     formatRules: [
       "Respuestas breves de 2-3 oraciones máximo, ir directo al punto.",
       "Usar viñetas solo cuando sea estrictamente necesario.",
@@ -431,9 +431,9 @@ export const promptSections = {
       "Ser específico pero sin dar explicaciones largas.",
       "Invitar a contactar al asesor para más detalles.",
     ],
-    
+
     fallback:
-      "Para más información, contacta a nuestro asesor Leonar Meneses al WhatsApp 984 801 8317 o email ventas3.kingmaq@gmail.com o visite nuestra sucursal https://maps.app.goo.gl/e3KMr56jzEyKCgfh7",
+      "Para más información, contacta a nuestro asesor Leonar Meneses al WhatsApp 984 801 8317 o email ventas3.kingmaq@gmail.com o visite nuestra sucursal https://maps.app.goo.gl/dYZbukEnLx4KDK8r9",
   },
 
   // ========================================
@@ -448,7 +448,7 @@ export const promptSections = {
       "No ofrecer condiciones de financiamiento sin aprobación.",
       "No comprometer garantías extendidas sin autorización.",
     ],
-    
+
     escalationCriteria: [
       "Cliente solicita cotización formal para proyecto grande.",
       "Preguntas sobre crédito o financiamiento específico.",
@@ -462,7 +462,7 @@ export const promptSections = {
       "Proyectos que requieren múltiples equipos o soluciones complejas.",
       "Consultas sobre disponibilidad de equipos no listados en catálogo.",
     ],
-    
+
     escalationMessage:
       "Te conecto con nuestro asesor Leonar Meneses:\n\n• WhatsApp: 984 801 8317\n• Email: ventas3.kingmaq@gmail.com\n\nHorario: Lunes a viernes 8:00-18:00, Sábados 8:00-14:00.",
   },
