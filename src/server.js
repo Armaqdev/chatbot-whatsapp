@@ -83,8 +83,13 @@ app.post("/webhook", async (req, res) => {
       const contacts = value.contacts ?? [];
 
       for (const message of messages) {
-        // FILTRO: Solo procesamos texto y audio
-        if (message.type !== "text" && message.type !== "audio") continue;
+        console.log(`📩 Mensaje recibido. Tipo: ${message.type}`);
+
+        // FILTRO: Solo procesamos texto, audio y notas de voz
+        if (!["text", "audio", "voice"].includes(message.type)) {
+          console.log(`⚠️ Tipo de mensaje no soportado: ${message.type}`);
+          continue;
+        }
 
         const contact = contacts[0] ?? {};
         const contactName = contact.profile?.name ?? "";
@@ -98,14 +103,21 @@ app.post("/webhook", async (req, res) => {
           // 1. PROCESAR EL MENSAJE (TEXTO O AUDIO)
           if (message.type === "text") {
             text = message.text?.body ?? "";
-          } else if (message.type === "audio") {
-            console.log("🎤 Recibido mensaje de audio...");
-            const mediaId = message.audio.id;
-            const mimeType = message.audio.mime_type;
+          } else if (message.type === "audio" || message.type === "voice") {
+            console.log("🎤 Recibido mensaje de audio/voz...");
+
+            // Nota: 'voice' y 'audio' tienen estructuras similares pero pueden variar
+            const mediaObj = message.type === "audio" ? message.audio : message.voice;
+            const mediaId = mediaObj.id;
+            const mimeType = mediaObj.mime_type;
+
+            console.log(`📥 Descargando media ID: ${mediaId} (${mimeType})`);
 
             // Descargar audio de WhatsApp
             const mediaUrl = await getMediaUrl(mediaId);
             const mediaBuffer = await downloadMedia(mediaUrl);
+
+            console.log(`✅ Audio descargado (${mediaBuffer.length} bytes). Transcribiendo...`);
 
             // Transcribir con Gemini
             text = await transcribeAudio(mediaBuffer, mimeType);
