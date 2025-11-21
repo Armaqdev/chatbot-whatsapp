@@ -95,3 +95,30 @@ export const generateBotReply = async (customerMessage, chatHistory = []) => {
     throw error;
   }
 };
+
+// ========================================
+// TRANSCRIPCIÓN DE AUDIO
+// ========================================
+export const transcribeAudio = async (audioBuffer, mimeType) => {
+  try {
+    const model = ai.getGenerativeModel({ model: GEMINI_MODEL });
+
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          mimeType: mimeType,
+          data: audioBuffer.toString("base64")
+        }
+      },
+      { text: "Transcribe este audio exactamente tal cual se escucha. No añadas explicaciones ni texto adicional. Si no se entiende, di '(Audio ininteligible)'." }
+    ]);
+
+    const response = await result.response;
+    const text = response.text();
+    return text.trim();
+
+  } catch (error) {
+    console.error("❌ Error transcribiendo audio:", error);
+    throw new Error("Error al procesar el audio.");
+  }
+};
