@@ -4,8 +4,8 @@
 
 import "dotenv/config";
 import express from "express";
-import { generateBotReply } from "./services/gemini.js";
-import { sendWhatsAppText } from "./services/whatsapp.js";
+import { generateBotReply, transcribeAudio } from "./services/gemini.js";
+import { sendWhatsAppText, getMediaUrl, downloadMedia } from "./services/whatsapp.js";
 import { getHistory, addMessageToHistory } from "./services/chatHistory.js";
 
 // ========================================
@@ -83,27 +83,53 @@ app.post("/webhook", async (req, res) => {
       const contacts = value.contacts ?? [];
 
       for (const message of messages) {
-        if (message.type !== "text") continue;
+        // FILTRO: Solo procesamos texto y audio
+        if (message.type !== "text" && message.type !== "audio") continue;
 
         const contact = contacts[0] ?? {};
         const contactName = contact.profile?.name ?? "";
         const waId = contact.wa_id ?? message.from;
-        const text = message.text?.body ?? "";
         const phoneNumberId = value.metadata?.phone_number_id;
+
+        let text = "";
 
         // --- LOGICA DEL BOT ---
         try {
-          // 1. Obtener historial
+          // 1. PROCESAR EL MENSAJE (TEXTO O AUDIO)
+          if (message.type === "text") {
+            text = message.text?.body ?? "";
+          } else if (message.type === "audio") {
+            console.log("🎤 Recibido mensaje de audio...");
+            const mediaId = message.audio.id;
+            const mimeType = message.audio.mime_type;
+
+            // Descargar audio de WhatsApp
+            const mediaUrl = await getMediaUrl(mediaId);
+            const mediaBuffer = await downloadMedia(mediaUrl);
+
+            // Transcribir con Gemini
+            text = await transcribeAudio(mediaBuffer, mimeType);
+            console.log(`📝 Transcripción: "${text}"`);
+          }
+
+          if (!text) {
+            console.log("⚠️ Mensaje vacío o no se pudo transcribir.");
+            continue;
+          }
+
+          // 2. Obtener historial
           const history = getHistory(waId);
 
-          // 2. Generar respuesta con contexto
+          // 3. Generar respuesta con contexto
           const reply = await generateBotReply(text, history);
 
-          // 3. Enviar respuesta
+          // 4. Enviar respuesta
           await sendWhatsAppText({ to: waId, message: reply, phoneNumberId });
 
-          // 4. Actualizar historial (Guardar ambos mensajes)
-          addMessageToHistory(waId, "user", text);
+          // 5. Actualizar historial (Guardar ambos mensajes)
+          // Si fue audio, guardamos la transcripción para que el bot tenga contexto
+          const userLog = message.type === "audio" ? `[AUDIO TRANSCRITO]: ${text}` : text;
+          addMessageToHistory(waId, "user", userLog);
           addMessageToHistory(waId, "model", reply);
 
         } catch (error) {

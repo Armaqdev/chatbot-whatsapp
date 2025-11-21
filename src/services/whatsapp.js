@@ -23,11 +23,11 @@ const graphUrl = (phoneNumberId) =>
 // Construye los headers necesarios para autenticarse con WhatsApp API
 const buildHeaders = () => {
   const token = process.env.WHATSAPP_TOKEN; // Token de acceso desde .env (REQUERIDO)
-  
+
   if (!token) {
     throw new Error("Missing WHATSAPP_TOKEN environment variable");
   }
-  
+
   return {
     Authorization: `Bearer ${token}`, // Token de autorización Bearer
     "Content-Type": "application/json", // Tipo de contenido JSON
@@ -46,7 +46,7 @@ export const sendWhatsAppText = async ({ to, message, phoneNumberId }) => {
   // ========================================
   // VALIDACIONES DE PARÁMETROS
   // ========================================
-  
+
   // Usar phoneNumberId del parámetro o del .env
   const id = phoneNumberId ?? process.env.WHATSAPP_PHONE_NUMBER_ID;
   if (!id) {
@@ -93,9 +93,47 @@ export const sendWhatsAppText = async ({ to, message, phoneNumberId }) => {
 
     // Si llegamos aquí, el mensaje se envió exitosamente
     // La respuesta contiene información sobre el mensaje enviado
-    
+
   } catch (error) {
     // Re-lanzar el error para que sea manejado por el código que llama a esta función
     throw error;
   }
+};
+
+// ========================================
+// GESTIÓN DE ARCHIVOS MULTIMEDIA
+// ========================================
+
+// Obtiene la URL de descarga de un archivo multimedia dado su ID
+export const getMediaUrl = async (mediaId) => {
+  const token = process.env.WHATSAPP_TOKEN;
+  if (!token) throw new Error("Missing WHATSAPP_TOKEN");
+
+  const response = await fetch(`https://graph.facebook.com/v21.0/${mediaId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error getting media URL: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data.url; // Esta es la URL temporal para descargar el binario
+};
+
+// Descarga el binario del archivo multimedia desde la URL obtenida
+export const downloadMedia = async (url) => {
+  const token = process.env.WHATSAPP_TOKEN;
+  if (!token) throw new Error("Missing WHATSAPP_TOKEN");
+
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error downloading media: ${response.statusText}`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
 };
