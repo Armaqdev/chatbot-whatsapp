@@ -24,35 +24,6 @@ const drive = google.drive({
 // ========================================
 // FUNCIONES PRINCIPALES
 // ========================================
-
-/**
- * Lista todas las imágenes en la carpeta configurada
- * @returns {Promise<Array>} Array de archivos con {id, name, mimeType}
- */
-export const listImagesFromDrive = async () => {
-    try {
-        console.log(`📂 Listando imágenes de carpeta: ${FOLDER_ID}`);
-
-        const response = await drive.files.list({
-            q: `'${FOLDER_ID}' in parents and (mimeType contains 'image/')`,
-            fields: 'files(id, name, mimeType)',
-            pageSize: 50
-        });
-
-        const files = response.data.files || [];
-        console.log(`✅ Encontradas ${files.length} imágenes`);
-
-        return files;
-    } catch (error) {
-        console.error("❌ Error listando imágenes de Drive:", error.message);
-        throw new Error(`Error accediendo a Google Drive: ${error.message}`);
-    }
-};
-
-/**
- * Descarga una imagen de Drive como buffer
- * @param {string} fileId - ID del archivo en Drive
- * @returns {Promise<Buffer>} Buffer de la imagen
  */
 export const downloadImageFromDrive = async (fileId) => {
     try {
