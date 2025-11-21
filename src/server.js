@@ -7,6 +7,7 @@ import express from "express";
 import { generateBotReply, transcribeAudio } from "./services/gemini.js";
 import { sendWhatsAppText, getMediaUrl, downloadMedia } from "./services/whatsapp.js";
 import { getHistory, addMessageToHistory } from "./services/chatHistory.js";
+import { initCampaignScheduler } from "./services/campaignScheduler.js";
 
 // ========================================
 // CONFIGURACIÓN DE VARIABLES
@@ -196,4 +197,11 @@ app.post("/webhook", async (req, res) => {
 // ⚠️ CAMBIO IMPORTANTE AQUÍ: Agregamos '0.0.0.0'
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`WhatsApp Gemini bot listening on port ${PORT}`);
+
+  // Inicializar programador de campañas
+  try {
+    initCampaignScheduler();
+  } catch (error) {
+    console.error("⚠️ Error iniciando scheduler de campañas:", error.message);
+  }
 });
