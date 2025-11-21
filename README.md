@@ -13,6 +13,11 @@ Este proyecto implementa un chatbot inteligente para WhatsApp Business que utili
 
 ---
 
+## 🔗 **Repositorio Oficial**
+[https://github.com/Armaqdev/chatbot-whatsapp.git](https://github.com/Armaqdev/chatbot-whatsapp.git)
+
+---
+
 ## 🔧 **Requisitos Previos**
 
 Antes de instalar, asegúrate de tener:
