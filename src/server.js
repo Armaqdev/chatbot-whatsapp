@@ -106,22 +106,36 @@ app.post("/webhook", async (req, res) => {
           } else if (message.type === "audio" || message.type === "voice") {
             console.log("🎤 Recibido mensaje de audio/voz...");
 
-            // Nota: 'voice' y 'audio' tienen estructuras similares pero pueden variar
+            // Enviar feedback inmediato
+            await sendWhatsAppText({ to: waId, message: "🎧 Escuchando tu audio...", phoneNumberId });
+
             const mediaObj = message.type === "audio" ? message.audio : message.voice;
             const mediaId = mediaObj.id;
-            const mimeType = mediaObj.mime_type;
+            // Limpiar mimeType (ej: 'audio/ogg; codecs=opus' -> 'audio/ogg')
+            const mimeType = mediaObj.mime_type.split(";")[0].trim();
 
-            console.log(`📥 Descargando media ID: ${mediaId} (${mimeType})`);
+            console.log(`📥 Descargando media ID: ${mediaId} (Mime original: ${mediaObj.mime_type}, Usado: ${mimeType})`);
 
-            // Descargar audio de WhatsApp
-            const mediaUrl = await getMediaUrl(mediaId);
-            const mediaBuffer = await downloadMedia(mediaUrl);
+            try {
+              // Descargar audio de WhatsApp
+              const mediaUrl = await getMediaUrl(mediaId);
+              const mediaBuffer = await downloadMedia(mediaUrl);
+              console.log(`✅ Audio descargado (${mediaBuffer.length} bytes).`);
 
-            console.log(`✅ Audio descargado (${mediaBuffer.length} bytes). Transcribiendo...`);
+              // Transcribir con Gemini
+              text = await transcribeAudio(mediaBuffer, mimeType);
+              console.log(`📝 Transcripción: "${text}"`);
 
-            // Transcribir con Gemini
-            text = await transcribeAudio(mediaBuffer, mimeType);
-            console.log(`📝 Transcripción: "${text}"`);
+              if (!text || text.includes("(Audio ininteligible)")) {
+                await sendWhatsAppText({ to: waId, message: "🙉 No pude entender el audio. ¿Podrías escribirlo?", phoneNumberId });
+                continue;
+              }
+
+            } catch (audioError) {
+              console.error("❌ Error procesando audio:", audioError);
+              await sendWhatsAppText({ to: waId, message: "⚠️ Tuve un problema escuchando el audio. Por favor intenta con texto.", phoneNumberId });
+              continue;
+            }
           }
 
           if (!text) {
@@ -140,7 +154,7 @@ app.post("/webhook", async (req, res) => {
 
           // 5. Actualizar historial (Guardar ambos mensajes)
           // Si fue audio, guardamos la transcripción para que el bot tenga contexto
-          const userLog = message.type === "audio" ? `[AUDIO TRANSCRITO]: ${text}` : text;
+          const userLog = message.type === "audio" || message.type === "voice" ? `[AUDIO TRANSCRITO]: ${text}` : text;
           addMessageToHistory(waId, "user", userLog);
           addMessageToHistory(waId, "model", reply);
 
