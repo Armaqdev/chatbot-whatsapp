@@ -100,22 +100,54 @@ export const generateBotReply = async (customerMessage, chatHistory = []) => {
 // TRANSCRIPCIÓN DE AUDIO
 // ========================================
 export const transcribeAudio = async (audioBuffer, mimeType) => {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("Falta la variable GEMINI_API_KEY en el archivo .env");
+  }
+
   try {
-    const model = ai.getGenerativeModel({ model: GEMINI_MODEL });
-
-    const result = await model.generateContent([
+    // Preparar el contenido con el audio en base64
+    const contents = [
       {
-        inlineData: {
-          mimeType: mimeType,
-          data: audioBuffer.toString("base64")
-        }
-      },
-      { text: "Transcribe este audio exactamente tal cual se escucha. No añadas explicaciones ni texto adicional. Si no se entiende, di '(Audio ininteligible)'." }
-    ]);
+        role: "user",
+        parts: [
+          {
+            inlineData: {
+              mimeType: mimeType,
+              data: audioBuffer.toString("base64")
+            }
+          },
+          {
+            text: "Transcribe este audio exactamente tal cual se escucha. Responde SOLO con la transcripción, sin explicaciones adicionales. Si no se entiende claramente, responde: (Audio ininteligible)"
+          }
+        ]
+      }
+    ];
 
-    const response = await result.response;
-    const text = response.text();
-    return text.trim();
+    const request = {
+      model: GEMINI_MODEL,
+      contents: contents,
+      generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: 500,
+      }
+    };
+
+    // Usar el mismo método que generateBotReply
+    const stream = await ai.models.generateContentStream(request);
+
+    let transcription = "";
+    for await (const chunk of stream) {
+      if (chunk.text) {
+        transcription += chunk.text;
+      }
+    }
+
+    const cleaned = transcription.trim();
+    if (!cleaned) {
+      throw new Error("Gemini devolvió una transcripción vacía.");
+    }
+
+    return cleaned;
 
   } catch (error) {
     console.error("❌ Error transcribiendo audio:", error);
