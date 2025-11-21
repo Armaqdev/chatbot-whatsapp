@@ -34,36 +34,34 @@ export const generateBotReply = async (customerMessage, chatHistory = []) => {
 
   try {
     // 1. Construir la instrucción del sistema (Contexto del negocio)
-    const systemInstruction = {
-      role: "system",
-      parts: [{ text: buildSystemInstruction() }]
-    };
+    const contextText = buildSystemInstruction();
 
     // 2. Convertir el historial de chat al formato de Gemini
-    // El historial viene como [{ role: 'user'|'model', text: '...' }]
-    // Gemini espera [{ role: 'user'|'model', parts: [{ text: '...' }] }]
     const historyParts = chatHistory.map(msg => ({
       role: msg.role,
       parts: [{ text: msg.text }]
     }));
 
-    // 3. Agregar el mensaje actual del usuario
+    // 3. Preparar el mensaje actual
+    // ESTRATEGIA ROBUSTA: Adjuntamos el contexto al mensaje del usuario.
+    // Esto asegura que el modelo SIEMPRE tenga la información disponible.
+    const finalUserMessage = `CONTEXTO DEL SISTEMA:\n${contextText}\n\n---\n\nMENSAJE DEL USUARIO:\n${formatUserMessage(customerMessage)}`;
+
     const currentMessage = {
       role: "user",
-      parts: [{ text: formatUserMessage(customerMessage) }]
+      parts: [{ text: finalUserMessage }]
     };
 
-    // 4. Combinar todo: Historial + Mensaje Actual
+    // 4. Combinar todo
     const contents = [...historyParts, currentMessage];
 
-    // DEBUG: Ver qué estamos enviando exactamente
+    // DEBUG: Ver qué estamos enviando
     // console.log("🤖 Enviando a Gemini:", JSON.stringify({ model: GEMINI_MODEL, contentsLength: contents.length }, null, 2));
 
     const request = {
       model: GEMINI_MODEL,
       contents: contents,
       generationConfig,
-      systemInstruction: systemInstruction, // Enviamos el contexto como System Instruction
     };
 
     if (tools.length > 0) {
@@ -90,9 +88,7 @@ export const generateBotReply = async (customerMessage, chatHistory = []) => {
     return cleaned;
 
   } catch (error) {
-    // Mejora en el reporte de errores
     console.error("❌ Error detallado de Gemini:", JSON.stringify(error, null, 2));
-    // Si el error es por el modelo, lo avisamos
     if (error.message && error.message.includes("400")) {
       console.error("⚠️ PISTA: Verifica que el modelo '" + GEMINI_MODEL + "' exista y que tu API Key tenga permisos.");
     }
