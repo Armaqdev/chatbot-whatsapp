@@ -2,10 +2,11 @@
 // SERVIDOR PRINCIPAL DEL CHATBOT WHATSAPP
 // ========================================
 
-import "dotenv/config"; 
+import "dotenv/config";
 import express from "express";
-import { generateBotReply } from "./services/gemini.js"; 
-import { sendWhatsAppText } from "./services/whatsapp.js"; 
+import { generateBotReply } from "./services/gemini.js";
+import { sendWhatsAppText } from "./services/whatsapp.js";
+import { getHistory, addMessageToHistory } from "./services/chatHistory.js";
 
 // ========================================
 // CONFIGURACIÓN DE VARIABLES
@@ -13,8 +14,12 @@ import { sendWhatsAppText } from "./services/whatsapp.js";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// IMPORTANTE: Unificamos el nombre del token para que coincida con Railway
-const VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN || "chatbotarmaq";
+// SEGURIDAD: Eliminar valor por defecto. Debe venir de .env
+const VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN;
+if (!VERIFY_TOKEN) {
+  console.error("❌ ERROR CRÍTICO: Falta WEBHOOK_VERIFY_TOKEN en .env");
+  process.exit(1);
+}
 
 // Configuración de asesores
 const notifyNumber = process.env.WHATSAPP_NOTIFY_NUMBER?.trim();
@@ -69,7 +74,7 @@ app.get("/webhook", (req, res) => {
 // 3. RECEPCIÓN DE MENSAJES (POST)
 app.post("/webhook", async (req, res) => {
   const entries = req.body.entry ?? [];
-  
+
   for (const entry of entries) {
     const changes = entry.changes ?? [];
     for (const change of changes) {
@@ -81,21 +86,32 @@ app.post("/webhook", async (req, res) => {
         if (message.type !== "text") continue;
 
         const contact = contacts[0] ?? {};
-        const contactName = contact.profile?.name ?? ""; 
-        const waId = contact.wa_id ?? message.from; 
-        const text = message.text?.body ?? ""; 
-        const phoneNumberId = value.metadata?.phone_number_id; 
+        const contactName = contact.profile?.name ?? "";
+        const waId = contact.wa_id ?? message.from;
+        const text = message.text?.body ?? "";
+        const phoneNumberId = value.metadata?.phone_number_id;
 
         // --- LOGICA DEL BOT ---
         try {
-          const reply = await generateBotReply(text);
+          // 1. Obtener historial
+          const history = getHistory(waId);
+
+          // 2. Generar respuesta con contexto
+          const reply = await generateBotReply(text, history);
+
+          // 3. Enviar respuesta
           await sendWhatsAppText({ to: waId, message: reply, phoneNumberId });
+
+          // 4. Actualizar historial (Guardar ambos mensajes)
+          addMessageToHistory(waId, "user", text);
+          addMessageToHistory(waId, "model", reply);
+
         } catch (error) {
           console.error("Error procesando mensaje:", error);
           const fallback = "En este momento no puedo responder. Un asesor humano dará seguimiento en breve.";
           try {
             await sendWhatsAppText({ to: waId, message: fallback, phoneNumberId });
-          } catch (e) {}
+          } catch (e) { }
         }
 
         // --- NOTIFICACIONES ---
@@ -127,6 +143,5 @@ app.post("/webhook", async (req, res) => {
 
 // ⚠️ CAMBIO IMPORTANTE AQUÍ: Agregamos '0.0.0.0'
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`WhatsApp Gemini bot listening on port ${PORT}`);
+  console.log(`WhatsApp Gemini bot listening on port ${PORT}`);
 });
-

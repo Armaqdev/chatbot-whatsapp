@@ -36,8 +36,12 @@ const formatCatalog = (catalog) =>
 // ========================================
 // CONSTRUCTOR PRINCIPAL DEL PROMPT
 // ========================================
-// Esta función toma el mensaje del cliente y construye el prompt completo
-export const buildPromptContents = (customerMessage) => {
+// ========================================
+// CONSTRUCTOR PRINCIPAL DEL PROMPT
+// ========================================
+// Esta función construye la "Instrucción del Sistema" (Contexto)
+// y prepara el mensaje del usuario.
+export const buildSystemInstruction = () => {
   // Extraer todas las secciones de configuración
   const {
     businessProfile,
@@ -51,48 +55,35 @@ export const buildPromptContents = (customerMessage) => {
   // ========================================
   // CONSTRUCCIÓN DE SECCIONES DEL PROMPT
   // ========================================
-  
+
   // Combinar toda la información en secciones organizadas
   const sections = [
     // SECCIÓN 1: Información básica del negocio
-    `Información del negocio: ${businessProfile.displayName}\nTagline: ${businessProfile.tagline}\nResumen: ${businessProfile.overview}\nZona de servicio: ${businessProfile.serviceArea}\nHorarios de atención: ${businessProfile.businessHours}\nCanales de contacto: ${businessProfile.contactChannels.join(", ")}\nModalidad de entrega: ${businessProfile.deliveryPolicy}\nOpción de recogida: ${businessProfile.pickupOptions}`,
-    
+    `NEGOCIO: ${businessProfile.displayName}\n${businessProfile.tagline}\nUbicación: ${businessProfile.serviceArea}\nHorario: ${businessProfile.businessHours}\nContacto: ${businessProfile.contactChannels.join(", ")}`,
+
     // SECCIÓN 2: Catálogo de productos/servicios
-    `Catálogo principal:\n${formatCatalog(catalog)}`,
-    
+    `CATÁLOGO:\n${formatCatalog(catalog)}`,
+
     // SECCIÓN 3: Reglas de precios y facturación
-    `Reglas de precios:\n${joinList(pricingRules)}`,
-    
+    `PRECIOS:\n${joinList(pricingRules)}`,
+
     // SECCIÓN 4: Políticas de operación y servicio
-    `Políticas operativas:\n${joinList(operationalPolicies)}`,
-    
+    `POLÍTICAS:\n${joinList(operationalPolicies)}`,
+
     // SECCIÓN 5: Cómo debe responder el chatbot
-    `Estilo de respuesta deseado:\n- Tono: ${responseStyle.tone}\n- Formato: ${responseStyle.formatRules.join("\n- ")}\n- Fallback: ${responseStyle.fallback}`,
-    
+    `ESTILO:\n- Tono: ${responseStyle.tone}\n- Reglas: ${responseStyle.formatRules.join("; ")}\n- Fallback: ${responseStyle.fallback}`,
+
     // SECCIÓN 6: Restricciones y reglas de escalación
-    `Cumplimiento:\n- No prometer: ${compliance.prohibitedPromises.join("; ")}\n- Escalar cuando: ${compliance.escalationCriteria.join("; ")}`,
-    
-    // SECCIÓN 7: Objetivo principal del chatbot
-    `Meta del chatbot: brindar cotizaciones claras, resolver dudas frecuentes y agendar seguimientos con un asesor humano si es necesario.`,
-  ].join("\n\n---\n\n");
+    `CUMPLIMIENTO:\n- Prohibido: ${compliance.prohibitedPromises.join("; ")}\n- Escalar si: ${compliance.escalationCriteria.join("; ")}`,
+  ].join("\n\n");
 
   // ========================================
   // INSTRUCCIÓN PRINCIPAL PARA LA IA
   // ========================================
-  const instruction = `Actúa como asistente virtual del negocio ${businessProfile.displayName}. Usa la información oficial que se detalla a continuación. Si la solicitud excede tu capacidad, indica el siguiente paso con un asesor humano. Gestiona en español neutro.`;
+  return `Actúa como asistente virtual de ${businessProfile.displayName}. Usa la siguiente información oficial. Si no sabes algo, escala al humano.\n\n${sections}`;
+};
 
-  // ========================================
-  // ESTRUCTURA FINAL DEL MENSAJE PARA GEMINI
-  // ========================================
-  // Gemini espera un array de mensajes con roles y contenido
-  return [
-    {
-      role: "user", // Mensaje del usuario
-      parts: [
-        {
-          text: `${instruction}\n\n${sections}\n\nMensaje del cliente:\n${customerMessage}\n\nResponde solo con el mensaje que se enviará al cliente.`,
-        },
-      ],
-    },
-  ];
+// Función simple para formatear el mensaje del usuario si es necesario
+export const formatUserMessage = (customerMessage) => {
+  return customerMessage;
 };

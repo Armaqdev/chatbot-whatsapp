@@ -2,7 +2,7 @@
 // SERVICIO DE GOOGLE GEMINI AI
 // ========================================
 import { GoogleGenAI } from "@google/genai";
-import { buildPromptContents } from "./promptBuilder.js";
+import { buildSystemInstruction, formatUserMessage } from "./promptBuilder.js";
 
 // ========================================
 // CONFIGURACIÓN DE GEMINI
@@ -27,28 +27,43 @@ const generationConfig = {
 // ========================================
 // FUNCIÓN PRINCIPAL
 // ========================================
-export const generateBotReply = async (customerMessage) => {
+export const generateBotReply = async (customerMessage, chatHistory = []) => {
   if (!process.env.GEMINI_API_KEY) {
     throw new Error("Falta la variable GEMINI_API_KEY en el archivo .env");
   }
 
   try {
-    // Construir el prompt
-    let contents = buildPromptContents(customerMessage);
+    // 1. Construir la instrucción del sistema (Contexto del negocio)
+    const systemInstruction = {
+      role: "system",
+      parts: [{ text: buildSystemInstruction() }]
+    };
 
-    // SEGURIDAD: Si buildPromptContents devuelve solo un objeto, convertirlo a array
-    // La API espera siempre un Array: [{ role: 'user', parts: [...] }]
-    if (!Array.isArray(contents)) {
-        contents = [contents];
-    }
+    // 2. Convertir el historial de chat al formato de Gemini
+    // El historial viene como [{ role: 'user'|'model', text: '...' }]
+    // Gemini espera [{ role: 'user'|'model', parts: [{ text: '...' }] }]
+    const historyParts = chatHistory.map(msg => ({
+      role: msg.role,
+      parts: [{ text: msg.text }]
+    }));
 
-    // DEBUG: Ver qué estamos enviando exactamente (aparecerá en tu terminal)
-    console.log("🤖 Enviando a Gemini:", JSON.stringify({ model: GEMINI_MODEL, contents }, null, 2));
+    // 3. Agregar el mensaje actual del usuario
+    const currentMessage = {
+      role: "user",
+      parts: [{ text: formatUserMessage(customerMessage) }]
+    };
+
+    // 4. Combinar todo: Historial + Mensaje Actual
+    const contents = [...historyParts, currentMessage];
+
+    // DEBUG: Ver qué estamos enviando exactamente
+    // console.log("🤖 Enviando a Gemini:", JSON.stringify({ model: GEMINI_MODEL, contentsLength: contents.length }, null, 2));
 
     const request = {
       model: GEMINI_MODEL,
       contents: contents,
       generationConfig,
+      systemInstruction: systemInstruction, // Enviamos el contexto como System Instruction
     };
 
     if (tools.length > 0) {
@@ -79,7 +94,7 @@ export const generateBotReply = async (customerMessage) => {
     console.error("❌ Error detallado de Gemini:", JSON.stringify(error, null, 2));
     // Si el error es por el modelo, lo avisamos
     if (error.message && error.message.includes("400")) {
-         console.error("⚠️ PISTA: Verifica que el modelo '" + GEMINI_MODEL + "' exista y que tu API Key tenga permisos.");
+      console.error("⚠️ PISTA: Verifica que el modelo '" + GEMINI_MODEL + "' exista y que tu API Key tenga permisos.");
     }
     throw error;
   }
