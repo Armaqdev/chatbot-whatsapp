@@ -32,22 +32,26 @@ export const generateBotReply = async (customerMessage, chatHistory = []) => {
     throw new Error("Falta la variable GEMINI_API_KEY en el archivo .env");
   }
 
-  try {
-    // 1. Construir la instrucción del sistema (Contexto del negocio)
-    const contextText = buildSystemInstruction();
+  const maxRetries = 3;
+  let lastError;
 
-    // 2. Convertir el historial de chat al formato de Gemini
-    const historyParts = chatHistory.map(msg => ({
-      role: msg.role,
-      parts: [{ text: msg.text }]
-    }));
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      // 1. Construir la instrucción del sistema (Contexto del negocio)
+      const contextText = buildSystemInstruction();
 
-    // 3. Preparar el mensaje actual
-    // ESTRATEGIA ROBUSTA: Adjuntamos el contexto al mensaje del usuario.
-    // Esto asegura que el modelo SIEMPRE tenga la información disponible.
-    const finalUserMessage = `CONTEXTO DEL SISTEMA:\n${contextText}\n\n---\n\nMENSAJE DEL USUARIO:\n${formatUserMessage(customerMessage)}`;
+      // 2. Convertir el historial de chat al formato de Gemini
+      const historyParts = chatHistory.map(msg => ({
+        role: msg.role,
+        parts: [{ text: msg.text }]
+      }));
 
-    const currentMessage = {
+      // 3. Preparar el mensaje actual
+      // ESTRATEGIA ROBUSTA: Adjuntamos el contexto al mensaje del usuario.
+      // Esto asegura que el modelo SIEMPRE tenga la información disponible.
+      const finalUserMessage = `CONTEXTO DEL SISTEMA:\n${contextText}\n\n---\n\nMENSAJE DEL USUARIO:\n${formatUserMessage(customerMessage)}`;
+
+      const currentMessage = {
       role: "user",
       parts: [{ text: finalUserMessage }]
     };
@@ -87,13 +91,31 @@ export const generateBotReply = async (customerMessage, chatHistory = []) => {
 
     return cleaned;
 
-  } catch (error) {
-    console.error("❌ Error detallado de Gemini:", JSON.stringify(error, null, 2));
-    if (error.message && error.message.includes("400")) {
-      console.error("⚠️ PISTA: Verifica que el modelo '" + GEMINI_MODEL + "' exista y que tu API Key tenga permisos.");
+    } catch (error) {
+      lastError = error;
+      console.error(`❌ Error detallado de Gemini (intento ${attempt + 1}/${maxRetries + 1}):`, JSON.stringify(error, null, 2));
+
+      // Check if it's a 429 error and we haven't exceeded retries
+      if (error.message && error.message.includes("429") && attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 1s, 2s, 4s
+        console.log(`⏳ Rate limit alcanzado. Reintentando en ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+
+      if (error.message && error.message.includes("400")) {
+        console.error("⚠️ PISTA: Verifica que el modelo '" + GEMINI_MODEL + "' exista y que tu API Key tenga permisos.");
+      }
+
+      // If not a 429 or max retries reached, throw the error
+      if (!(error.message && error.message.includes("429")) || attempt >= maxRetries) {
+        throw error;
+      }
     }
-    throw error;
   }
+
+  // If we get here, all retries failed
+  throw lastError;
 };
 
 // ========================================
