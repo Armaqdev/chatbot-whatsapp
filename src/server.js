@@ -8,6 +8,7 @@ import { generateBotReply, transcribeAudio } from "./services/gemini.js";
 import { sendWhatsAppText, getMediaUrl, downloadMedia } from "./services/whatsapp.js";
 import { getHistory, addMessageToHistory } from "./services/chatHistory.js";
 import { initCampaignScheduler } from "./services/campaignScheduler.js";
+import { messageQueueService } from "./services/messageQueue.js";
 
 // ========================================
 // CONFIGURACIÓN DE VARIABLES
@@ -155,8 +156,10 @@ app.post("/webhook", async (req, res) => {
           // 2. Obtener historial
           const history = getHistory(waId);
 
-          // 3. Generar respuesta con contexto
-          const reply = await generateBotReply(text, history);
+          // 3. Generar respuesta con contexto (usando cola para evitar rate limits)
+          const reply = await messageQueueService.enqueue(async () => {
+            return await generateBotReply(text, history);
+          });
 
           // 4. Enviar respuesta
           await sendWhatsAppText({ to: waId, message: reply, phoneNumberId });

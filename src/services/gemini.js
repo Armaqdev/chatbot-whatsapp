@@ -32,7 +32,7 @@ export const generateBotReply = async (customerMessage, chatHistory = []) => {
     throw new Error("Falta la variable GEMINI_API_KEY en el archivo .env");
   }
 
-  const maxRetries = 3;
+  const maxRetries = 5;
   let lastError;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -97,7 +97,7 @@ export const generateBotReply = async (customerMessage, chatHistory = []) => {
 
       // Check if it's a 429 error and we haven't exceeded retries
       if (error.message && error.message.includes("429") && attempt < maxRetries) {
-        const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 1s, 2s, 4s
+        const delay = Math.pow(2, attempt) * 1500; // Exponential backoff: 1.5s, 3s, 6s, 12s, 24s
         console.log(`⏳ Rate limit alcanzado. Reintentando en ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
