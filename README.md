@@ -50,19 +50,34 @@ npm install
 
 ### 3. Configurar variables de entorno
 
-Crea un archivo `.env` en la raíz del proyecto:
+Crea un archivo `.env` en la raíz del proyecto. El sistema está listo para manejar un número principal **y hasta tres números adicionales** de WhatsApp, cada uno con su propio token. El webhook de Meta proporcionará el `phone_number_id` en cada mensaje entrante y el bot seleccionará automáticamente el token correspondiente.
 
 ```env
+# ------------------
 # WhatsApp Business API
-WHATSAPP_TOKEN=tu_token_de_whatsapp
-WHATSAPP_PHONE_NUMBER_ID=tu_phone_number_id
+# ------------------
+# Número principal
+WHATSAPP_PHONE_NUMBER_ID=tu_phone_number_id_principal
+WHATSAPP_TOKEN=tu_token_de_whatsapp_principal
 WEBHOOK_VERIFY_TOKEN=tu_token_de_verificacion_secreto
 
+# Números adicionales (opcional): define el ID y un token por cada línea
+# puedes tener hasta 3 extras.
+WHATSAPP_PHONE_NUMBER_ID_2=otro_phone_number_id
+WHATSAPP_TOKEN_otro_phone_number_id=token_para_el_segundo_numero
+
+WHATSAPP_PHONE_NUMBER_ID_3=tercer_phone_number_id
+WHATSAPP_TOKEN_tercer_phone_number_id=token_para_el_tercer_numero
+
+# ------------------
 # Google Gemini AI
+# ------------------
 GEMINI_API_KEY=tu_api_key_de_gemini
 GEMINI_MODEL=gemini-1.5-flash
 
+# ------------------
 # Google Drive (para campañas)
+# ------------------
 GOOGLE_DRIVE_FOLDER_ID=id_de_tu_carpeta_publica
 GOOGLE_API_KEY=tu_api_key_de_google
 

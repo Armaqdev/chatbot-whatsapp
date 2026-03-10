@@ -29,6 +29,14 @@ const advisorNumbers = (process.env.WHATSAPP_ADVISOR_QUEUE ?? "")
   .map((value) => value.trim())
   .filter(Boolean);
 
+// Números de WhatsApp configurados (el principal + hasta 3 adicionales)
+const whatsappIds = [process.env.WHATSAPP_PHONE_NUMBER_ID];
+for (let i = 2; i <= 4; i++) {
+  const envVar = process.env[`WHATSAPP_PHONE_NUMBER_ID_${i}`];
+  if (envVar) whatsappIds.push(envVar);
+}
+console.log(`📱 WhatsApp Phone IDs cargados: ${whatsappIds.join(", ")}`);
+
 let advisorCursor = 0;
 
 // ========================================

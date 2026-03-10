@@ -9,8 +9,17 @@ import fetch from "node-fetch";
 const graphUrl = (phoneNumberId) =>
   `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`;
 
-const buildHeaders = () => {
-  const token = process.env.WHATSAPP_TOKEN;
+// devuelve los encabezados con el bearer token correspondiente al número
+// Si se pasa `phoneNumberId` y existe una variable `WHATSAPP_TOKEN_<ID>` se usa
+// ese token; de lo contrario se toma la variable genérica WHATSAPP_TOKEN.
+const buildHeaders = (phoneNumberId) => {
+  let token = process.env.WHATSAPP_TOKEN;
+  if (phoneNumberId) {
+    const specific = process.env[`WHATSAPP_TOKEN_${phoneNumberId}`];
+    if (specific) {
+      token = specific;
+    }
+  }
   if (!token) {
     throw new Error("Missing WHATSAPP_TOKEN environment variable");
   }
@@ -42,7 +51,7 @@ export const sendWhatsAppText = async ({ to, message, phoneNumberId }) => {
   try {
     const response = await fetch(graphUrl(id), {
       method: "POST",
-      headers: buildHeaders(),
+      headers: buildHeaders(id),
       body: JSON.stringify(payload),
     });
 
@@ -141,7 +150,7 @@ export const sendWhatsAppImage = async ({ to, imageBuffer, mimeType, caption, ph
 
     const sendResponse = await fetch(graphUrl(id), {
       method: "POST",
-      headers: buildHeaders(),
+      headers: buildHeaders(id),
       body: JSON.stringify(payload),
     });
 
