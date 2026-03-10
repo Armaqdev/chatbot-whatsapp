@@ -31,8 +31,9 @@ class MessageQueue {
       } catch (error) {
         reject(error);
       }
-      // Pequeña pausa entre solicitudes para respetar rate limits
-      await new Promise(r => setTimeout(r, 500));
+      // Pausa entre solicitudes para respetar rate limits de Google Gemini
+      // 2 segundos = ~30 solicitudes/minuto (debajo del límite usual)
+      await new Promise(r => setTimeout(r, 2000));
     }
 
     this.processing = false;
